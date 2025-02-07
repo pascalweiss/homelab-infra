@@ -15,9 +15,9 @@ services:
       - '${GITLAB_HTTPS_PORT}:443'
       - '${GITLAB_SSH_PORT}:22'
     volumes:
-      - '${GITLAB_CONFIG}/config:/etc/gitlab'
-      - '${GITLAB_LOGS}/logs:/var/log/gitlab'
-      - '${GITLAB_DATA}/data:/var/opt/gitlab'
+      - '${GITLAB_PERSISTENCE}/config:/etc/gitlab'
+      - '${GITLAB_PERSISTENCE}/logs:/var/log/gitlab'
+      - '${GITLAB_PERSISTENCE}/data:/var/opt/gitlab'
     shm_size: '256m'
 
 networks:
