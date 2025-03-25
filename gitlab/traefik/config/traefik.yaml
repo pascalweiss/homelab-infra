@@ -1,16 +1,50 @@
+# Static configuration
 api:
+  insecure: true  # Enable the API and dashboard (insecure for testing only)
   dashboard: true
-  insecure: true
 
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+# Configure providers
 providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
     network: traefik-network
+  file:
+    directory: "/etc/traefik"
+    watch: true
 
-entryPoints:
-  web:
-    address: ":80"
+# Define common middlewares and routers
+http:
+  middlewares:
+    securityHeaders:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        frameDeny: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customFrameOptionsValue: "SAMEORIGIN"
+    
+    # This will be used when we add TLS
+    redirectToHttps:
+      redirectScheme:
+        scheme: https
+        permanent: true
+  
+  # Configure the dashboard to be available at traefik.homelab.lan
+  routers:
+    dashboard:
+      rule: "Host(`traefik.homelab.lan`)"
+      service: "api@internal"
+      entryPoints:
+        - web
 
 log:
   level: INFO
