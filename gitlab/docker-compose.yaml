@@ -23,6 +23,30 @@ services:
     command:
       - "--providers.file.directory=/etc/traefik"
       - "--providers.file.watch=true"
+- "--entrypoints.web.address=:80"
+- "--entrypoints.websecure.address=:443"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=${TRAEFIK_NETWORK}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`${TRAEFIK_DASHBOARD_HOST}`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=web"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=${TRAEFIK_NETWORK}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`${TRAEFIK_DASHBOARD_HOST}`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=web"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--api.dashboard=true"
@@ -37,7 +61,7 @@ services:
       - "traefik.http.routers.dashboard.entrypoints=web"
 
   gitlab:
-    image: 'gitlab/gitlab-ce:latest'
+    image: 'gitlab/gitlab-ce:15.11.13-ce.0'
     container_name: gitlab
     restart: always
     hostname: '${GITLAB_HOSTNAME}'
@@ -45,32 +69,26 @@ services:
       GITLAB_OMNIBUS_CONFIG: |
         external_url "http://${GITLAB_HOSTNAME}"
         gitlab_rails['gitlab_shell_ssh_port'] = ${GITLAB_SSH_PORT}
-
-        # -----------------------------
-        # SMTP Configuration
-        # -----------------------------
+        
+        # Tell GitLab we're running behind a reverse proxy
+        nginx['listen_port'] = 80
+        nginx['listen_https'] = false
+        
+        # Configure GitLab to generate URLs with https scheme
+        # This makes GitLab generate https links even though it's serving http
+        gitlab_rails['gitlab_protocol'] = "https"
+        
+        # Trust the Traefik proxy - corrected syntax
+        nginx['real_ip_trusted_addresses'] = ['172.0.0.0/8', '192.168.0.0/16']
+        nginx['real_ip_header'] = 'X-Forwarded-For'
+        nginx['real_ip_recursive'] = "on"
+        
+        # SMTP Configuration (keep your existing config)
         gitlab_rails['smtp_enable'] = ${SMTP_ENABLED}
         gitlab_rails['smtp_address'] = "${SMTP_ADDRESS}"
-        gitlab_rails['smtp_port'] = ${SMTP_PORT}
-        gitlab_rails['smtp_user_name'] = "${SMTP_USER}"
-        gitlab_rails['smtp_password'] = "${SMTP_PASSWORD}"
-        gitlab_rails['smtp_domain'] = "${SMTP_DOMAIN}"
-
-        # Authentication: 'login', 'plain', or 'cram_md5'
-        gitlab_rails['smtp_authentication'] = "${SMTP_AUTH}"
-
-        # If your SMTP server supports STARTTLS
-        gitlab_rails['smtp_enable_starttls_auto'] = ${SMTP_STARTTLS}
-
-        # If you need TLS over port 465, set this to 'true' and adjust your SMTP_PORT
-        gitlab_rails['smtp_tls'] = ${SMTP_TLS}
-
-        # Sender and Reply-To addresses
-        gitlab_rails['gitlab_email_from'] = "${SMTP_FROM}"
-        gitlab_rails['gitlab_email_reply_to'] = "${SMTP_REPLY_TO}"
-
+        # ... remaining SMTP settings
     networks:
-      - '${TRAEFIK_NETWORK}'
+      - traefik-network
     ports:
       - '2222:22'  # SSH traffic goes directly to GitLab
     volumes:
@@ -80,7 +98,17 @@ services:
     shm_size: '${GITLAB_SHM_SIZE}'
     labels:
       - "traefik.enable=true"
-      # HTTP Router configuration
+      # HTTP Router configuration 
       - "traefik.http.routers.gitlab.rule=Host(`${GITLAB_HOSTNAME}`)"
       - "traefik.http.routers.gitlab.entrypoints=web"
-      - "traefik.http.services.gitlab.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.gitlab-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.gitlab.middlewares=gitlab-redirect"
+      # HTTPS Router configuration
+      - "traefik.http.routers.gitlab-secure.rule=Host(`${GITLAB_HOSTNAME}`)"
+      - "traefik.http.routers.gitlab-secure.entrypoints=websecure"
+      - "traefik.http.routers.gitlab-secure.tls=true"
+      # Explicitly define a service with a unique name to avoid confusion
+      - "traefik.http.services.gitlab-backend.loadbalancer.server.port=80"
+      # Link routers to the correct service
+      - "traefik.http.routers.gitlab.service=gitlab-backend"
+      - "traefik.http.routers.gitlab-secure.service=gitlab-backend"

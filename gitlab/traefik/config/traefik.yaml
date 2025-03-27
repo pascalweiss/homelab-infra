@@ -6,8 +6,16 @@ api:
 entryPoints:
   web:
     address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
   websecure:
     address: ":443"
+    http:
+      tls:
+        certResolver: default
 
 # Configure providers
 providers:
@@ -19,6 +27,10 @@ providers:
     directory: "/etc/traefik"
     watch: true
 
+tls:
+  certificates:
+    - certFile: "/certs/gitlab.crt"
+      keyFile: "/certs/gitlab.key"
 # Define common middlewares and routers
 http:
   middlewares:
