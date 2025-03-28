@@ -1,0 +1,23 @@
+services:
+  traefik:
+    image: traefik:v3.3.4
+    container_name: traefik
+    restart: unless-stopped
+    environment:
+      - TRAEFIK_DASHBOARD_HOST=${TRAEFIK_DASHBOARD_HOST}
+      - TRAEFIK_NETWORK=${TRAEFIK_NETWORK}
+    ports:
+      - "80:80"     # HTTP
+      - "8080:8080" # Dashboard
+      - "443:443"   # HTTPS
+    networks:
+      - traefik-network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # Allow Traefik to monitor Docker
+      - ../../traefik/config/traefik.yaml:/etc/traefik/traefik.yaml:ro  # Main configuration file
+      - ../../traefik/certs:/certs  # TLS certificates
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`${TRAEFIK_DASHBOARD_HOST}`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=web"
