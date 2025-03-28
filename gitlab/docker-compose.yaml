@@ -64,7 +64,7 @@ services:
     networks:
       - '${TRAEFIK_NETWORK}'
     ports:
-      - '2222:22'  # SSH traffic goes directly to GitLab
+      - '2222:22'
     volumes:
       - '${GITLAB_PERSISTENCE}/config:/etc/gitlab'
       - '${GITLAB_PERSISTENCE}/logs:/var/log/gitlab'
@@ -72,12 +72,19 @@ services:
     shm_size: '${GITLAB_SHM_SIZE}'
     labels:
       - "traefik.enable=true"
-      # HTTPS Router configuration
       - "traefik.http.routers.gitlab.rule=Host(`${GITLAB_HOSTNAME}`)"
       - "traefik.http.routers.gitlab.entrypoints=websecure"
       - "traefik.http.routers.gitlab.tls=true"
       - "traefik.http.services.gitlab.loadbalancer.server.port=80"
-      # HTTP Router configuration (no redirection)
-      - "traefik.http.routers.gitlab-http.rule=Host(`${GITLAB_HOSTNAME}`)"
-      - "traefik.http.routers.gitlab-http.entrypoints=web"
-      - "traefik.http.routers.gitlab-http.service=gitlab"
+
+  whoami:
+    image: traefik/whoami:v1.11.0
+    container_name: whoami
+    restart: unless-stopped
+    networks:
+      - traefik-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.${TRAEFIK_DASHBOARD_HOST}`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
+      - "traefik.http.services.whoami.loadbalancer.server.port=80"
