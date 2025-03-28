@@ -45,4 +45,3 @@ http:
 
 log:
   level: INFO
-cd /home/pweiss/dev/homelab-infra/gitlab && docker compose up -d
