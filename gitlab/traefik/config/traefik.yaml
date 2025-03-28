@@ -6,16 +6,8 @@ api:
 entryPoints:
   web:
     address: ":80"
-    http:
-      redirections:
-        entryPoint:
-          to: websecure
-          scheme: https
   websecure:
     address: ":443"
-    http:
-      tls:
-        certResolver: default
 
 # Configure providers
 providers:
@@ -27,10 +19,12 @@ providers:
     directory: "/etc/traefik"
     watch: true
 
+# TLS Configuration
 tls:
   certificates:
-    - certFile: "/certs/gitlab.crt"
-      keyFile: "/certs/gitlab.key"
+    - certFile: /certs/gitlab.crt
+      keyFile: /certs/gitlab.key
+
 # Define common middlewares and routers
 http:
   middlewares:
@@ -44,7 +38,6 @@ http:
         stsSeconds: 31536000
         customFrameOptionsValue: "SAMEORIGIN"
     
-    # This will be used when we add TLS
     redirectToHttps:
       redirectScheme:
         scheme: https
@@ -57,6 +50,9 @@ http:
       service: "api@internal"
       entryPoints:
         - web
+      middlewares:
+        - securityHeaders
+        - redirectToHttps
 
 log:
   level: INFO
