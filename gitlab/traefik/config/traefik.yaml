@@ -38,7 +38,7 @@ http:
   # Router for Traefik dashboard
   routers:
     dashboard:
-      rule: "Host(`traefik.homelab.lan`)"
+      rule: "Host(`${TRAEFIK_DASHBOARD_HOST}`)"
       service: "api@internal"
       entryPoints:
         - web
