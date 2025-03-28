@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Load environment variables from .env
-if [ -f .env ]; then
-    export $(cat .env | grep -v '^#' | xargs)
+if [ -f ../.env ]; then
+    export $(cat ../.env | grep -v '^#' | xargs)
 else
-    echo "Error: .env file not found"
+    echo "Error: .env file not found in parent directory"
     exit 1
 fi
 
@@ -21,20 +21,20 @@ if [ -z "$SSL_CERT_EXPIRY_DAYS" ]; then
 fi
 
 # Create certificates directory if it doesn't exist
-mkdir -p traefik/certs
+mkdir -p ../traefik/certs
 
 # Generate the certificate
 openssl req -x509 -nodes -days ${SSL_CERT_EXPIRY_DAYS} -newkey rsa:2048 \
-    -keyout traefik/certs/gitlab.key \
-    -out traefik/certs/gitlab.crt \
+    -keyout ../traefik/certs/gitlab.key \
+    -out ../traefik/certs/gitlab.crt \
     -subj "/CN=${GITLAB_HOSTNAME}" \
     -addext "subjectAltName=DNS:${GITLAB_HOSTNAME}"
 
 # Set correct permissions
-chmod 600 traefik/certs/gitlab.key
-chmod 644 traefik/certs/gitlab.crt
+chmod 600 ../traefik/certs/gitlab.key
+chmod 644 ../traefik/certs/gitlab.crt
 
 echo "SSL certificate successfully generated for ${GITLAB_HOSTNAME}"
-echo "Certificate: traefik/certs/gitlab.crt"
-echo "Private key: traefik/certs/gitlab.key"
-echo "Certificate will expire in ${SSL_CERT_EXPIRY_DAYS} days" 
+echo "Certificate: ../traefik/certs/gitlab.crt"
+echo "Private key: ../traefik/certs/gitlab.key"
+echo "Certificate will expire in ${SSL_CERT_EXPIRY_DAYS} days"

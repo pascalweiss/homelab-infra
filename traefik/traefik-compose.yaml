@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   traefik:
     image: traefik:v3.3.4
@@ -14,8 +16,8 @@ services:
       - traefik-network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro  # Allow Traefik to monitor Docker
-      - ../../traefik/config/traefik.yaml:/etc/traefik/traefik.yaml:ro  # Main configuration file
-      - ../../traefik/certs:/certs  # TLS certificates
+      - ./config/traefik.yaml:/etc/traefik/traefik.yaml:ro  # Main configuration file
+      - ./certs:/certs  # TLS certificates
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dashboard.rule=Host(`${TRAEFIK_DASHBOARD_HOST}`)"
