@@ -1,6 +1,6 @@
 # Static configuration
 api:
-  insecure: true  # Enable the API and dashboard (insecure for testing only)
+  insecure: true  # Enable the API and dashboard
   dashboard: true
 
 entryPoints:
@@ -15,9 +15,6 @@ providers:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
     network: traefik-network
-  file:
-    directory: "/etc/traefik"
-    watch: true
 
 # TLS Configuration
 tls:
@@ -25,7 +22,7 @@ tls:
     - certFile: /certs/gitlab.crt
       keyFile: /certs/gitlab.key
 
-# Define common middlewares and routers
+# Define security headers middleware
 http:
   middlewares:
     securityHeaders:
@@ -37,24 +34,15 @@ http:
         stsPreload: true
         stsSeconds: 31536000
         customFrameOptionsValue: "SAMEORIGIN"
-    
-    redirectToHttps:
-      redirectScheme:
-        scheme: https
-        permanent: true
   
-  # Configure the dashboard to be available at traefik.homelab.lan
+  # Router for Traefik dashboard
   routers:
     dashboard:
       rule: "Host(`traefik.homelab.lan`)"
       service: "api@internal"
       entryPoints:
         - web
-      middlewares:
-        - securityHeaders
-        - redirectToHttps
 
 log:
   level: INFO
-
-accessLog: {}
+cd /home/pweiss/dev/homelab-infra/gitlab && docker compose up -d

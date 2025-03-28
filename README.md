@@ -19,16 +19,17 @@ This setup provides a complete GitLab CE instance with Traefik as a reverse prox
 Traefik functions as a reverse proxy for GitLab, handling:
 - Traffic routing based on hostname
 - TLS termination for HTTPS connections
-- Redirection from HTTP to HTTPS for enhanced security
 - Exposing GitLab services via a clean URL
 
 #### TLS Encryption
 
-All traffic to GitLab is encrypted using TLS:
+All traffic to GitLab can be encrypted using TLS:
 - Traefik manages the TLS certificates
 - TLS certificates are mounted from the host into the Traefik container
-- Secure headers are applied through middleware configurations
-- Automatic redirection from HTTP to HTTPS using the `redirectToHttps` middleware
+- Secure headers are available through middleware configurations
+- GitLab internally manages redirection from HTTP to HTTPS
+
+Note: GitLab is configured to redirect HTTP traffic to HTTPS by default due to its internal configuration.
 
 #### Self-Signed Certificates
 
@@ -67,7 +68,7 @@ Email (SMTP) configuration is also available through environment variables for G
 
 ### Access
 
-- GitLab: https://[GITLAB_HOSTNAME]
+- GitLab: https://[GITLAB_HOSTNAME] (HTTP access will be redirected to HTTPS by GitLab)
 - Traefik Dashboard: http://[TRAEFIK_DASHBOARD_HOST]:8080
 
 ### Note

@@ -13,23 +13,13 @@ services:
     ports:
       - "80:80"     # HTTP
       - "8080:8080" # Dashboard
-      - "443:443"   # HTTPS (for future TLS)
+      - "443:443"   # HTTPS
     networks:
       - traefik-network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro  # Allow Traefik to monitor Docker
       - ./traefik/config/traefik.yaml:/etc/traefik/traefik.yaml:ro  # Main configuration file
-      - ./traefik/certs:/certs  # TLS certificates (for future use)
-    command:
-      - "--providers.file.directory=/etc/traefik"
-      - "--providers.file.watch=true"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--api.dashboard=true"
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=${TRAEFIK_NETWORK}"
+      - ./traefik/certs:/certs  # TLS certificates
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dashboard.rule=Host(`${TRAEFIK_DASHBOARD_HOST}`)"
@@ -82,9 +72,12 @@ services:
     shm_size: '${GITLAB_SHM_SIZE}'
     labels:
       - "traefik.enable=true"
-      # HTTP Router configuration
+      # HTTPS Router configuration
       - "traefik.http.routers.gitlab.rule=Host(`${GITLAB_HOSTNAME}`)"
       - "traefik.http.routers.gitlab.entrypoints=websecure"
       - "traefik.http.routers.gitlab.tls=true"
       - "traefik.http.services.gitlab.loadbalancer.server.port=80"
-      - "traefik.http.routers.gitlab.middlewares=redirectToHttps@file"
+      # HTTP Router configuration (no redirection)
+      - "traefik.http.routers.gitlab-http.rule=Host(`${GITLAB_HOSTNAME}`)"
+      - "traefik.http.routers.gitlab-http.entrypoints=web"
+      - "traefik.http.routers.gitlab-http.service=gitlab"
