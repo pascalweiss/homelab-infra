@@ -1,3 +1,6 @@
 .idea
 .DS_Store
 .env
+# Certificate files
+traefik/certs/*.crt
+traefik/certs/*.key
